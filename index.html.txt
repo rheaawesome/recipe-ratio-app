@@ -1,0 +1,1353 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta
+    name="viewport"
+    content="width=device-width, initial-scale=1, viewport-fit=cover, user-scalable=no"
+  />
+  <title>Recipe Ratio Manager</title>
+  <style>
+    :root {
+      --bg: #f6f7f9;
+      --card: #ffffff;
+      --line: #dcdfe5;
+      --text: #222;
+      --subtext: #666;
+      --accent: #2f6fed;
+      --accent-soft: #eaf1ff;
+      --danger: #c93c3c;
+      --danger-soft: #fdecec;
+      --shadow: 0 4px 14px rgba(0, 0, 0, 0.06);
+      --radius: 14px;
+      --radius-sm: 10px;
+      --input-height: 46px;
+    }
+
+    * {
+      box-sizing: border-box;
+      -webkit-tap-highlight-color: transparent;
+    }
+
+    html, body {
+      margin: 0;
+      padding: 0;
+      background: var(--bg);
+      color: var(--text);
+      font-family:
+        -apple-system,
+        BlinkMacSystemFont,
+        "Segoe UI",
+        "Helvetica Neue",
+        Arial,
+        sans-serif;
+    }
+
+    body {
+      min-height: 100vh;
+      padding-bottom: 40px;
+    }
+
+    .app {
+      width: 100%;
+      max-width: 760px;
+      margin: 0 auto;
+      padding:
+        max(16px, env(safe-area-inset-top))
+        16px
+        max(24px, env(safe-area-inset-bottom))
+        16px;
+    }
+
+    .screen {
+      display: none;
+    }
+
+    .screen.active {
+      display: block;
+    }
+
+    .topbar {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      margin-bottom: 16px;
+    }
+
+    .topbar h1,
+    .topbar h2 {
+      margin: 0;
+      font-size: 1.25rem;
+      line-height: 1.4;
+      font-weight: 700;
+      flex: 1;
+    }
+
+    .card {
+      background: var(--card);
+      border: 1px solid var(--line);
+      border-radius: var(--radius);
+      box-shadow: var(--shadow);
+      padding: 14px;
+      margin-bottom: 14px;
+    }
+
+    .section-title {
+      margin: 0 0 10px;
+      font-size: 1rem;
+      font-weight: 700;
+    }
+
+    .muted {
+      color: var(--subtext);
+      font-size: 0.95rem;
+    }
+
+    .label {
+      display: block;
+      font-weight: 700;
+      margin-bottom: 8px;
+      font-size: 0.95rem;
+    }
+
+    .input,
+    .select,
+    .textarea,
+    .button {
+      width: 100%;
+      font: inherit;
+      border-radius: 12px;
+    }
+
+    .input,
+    .select,
+    .textarea {
+      border: 1px solid var(--line);
+      background: #fff;
+      color: var(--text);
+      min-height: var(--input-height);
+      padding: 12px 14px;
+      outline: none;
+    }
+
+    .input:focus,
+    .select:focus,
+    .textarea:focus {
+      border-color: var(--accent);
+      box-shadow: 0 0 0 3px rgba(47, 111, 237, 0.12);
+    }
+
+    .textarea {
+      min-height: 100px;
+      resize: vertical;
+      line-height: 1.6;
+    }
+
+    .button {
+      min-height: 46px;
+      padding: 12px 14px;
+      border: 1px solid transparent;
+      background: var(--accent);
+      color: #fff;
+      font-weight: 700;
+      cursor: pointer;
+    }
+
+    .button.secondary {
+      background: #fff;
+      color: var(--text);
+      border-color: var(--line);
+    }
+
+    .button.danger {
+      background: var(--danger);
+    }
+
+    .button.ghost {
+      background: var(--accent-soft);
+      color: var(--accent);
+      border-color: transparent;
+    }
+
+    .button-row {
+      display: flex;
+      gap: 10px;
+      flex-wrap: wrap;
+    }
+
+    .button-row > .button {
+      flex: 1;
+    }
+
+    .search-row {
+      display: flex;
+      gap: 10px;
+      margin-bottom: 14px;
+    }
+
+    .search-row .input {
+      flex: 1;
+    }
+
+    .category-block {
+      background: var(--card);
+      border: 1px solid var(--line);
+      border-radius: var(--radius);
+      overflow: hidden;
+      box-shadow: var(--shadow);
+      margin-bottom: 12px;
+    }
+
+    .category-header {
+      width: 100%;
+      border: none;
+      background: #fff;
+      padding: 15px 14px;
+      text-align: left;
+      font: inherit;
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      cursor: pointer;
+    }
+
+    .category-header:active {
+      background: #f7f9fc;
+    }
+
+    .category-arrow {
+      width: 22px;
+      display: inline-flex;
+      justify-content: center;
+      align-items: center;
+      font-size: 0.95rem;
+      color: var(--subtext);
+      transition: transform 0.2s ease;
+    }
+
+    .category-header.open .category-arrow {
+      transform: rotate(90deg);
+    }
+
+    .category-name {
+      flex: 1;
+      font-weight: 700;
+      font-size: 1rem;
+    }
+
+    .category-count {
+      color: var(--subtext);
+      font-size: 0.9rem;
+    }
+
+    .recipe-list {
+      border-top: 1px solid var(--line);
+      display: none;
+      background: #fcfcfd;
+    }
+
+    .recipe-list.open {
+      display: block;
+    }
+
+    .recipe-item {
+      padding: 14px;
+      border-bottom: 1px solid #eceff4;
+      cursor: pointer;
+      user-select: none;
+      -webkit-user-select: none;
+      -webkit-touch-callout: none;
+      position: relative;
+    }
+
+    .recipe-item:last-child {
+      border-bottom: none;
+    }
+
+    .recipe-item:active {
+      background: #eef4ff;
+    }
+
+    .recipe-item-name {
+      font-weight: 700;
+      margin-bottom: 4px;
+      font-size: 1rem;
+    }
+
+    .recipe-item-meta {
+      color: var(--subtext);
+      font-size: 0.9rem;
+      line-height: 1.5;
+    }
+
+    .recipe-item.long-pressing {
+      background: #fff6f6;
+    }
+
+    .empty-message {
+      color: var(--subtext);
+      text-align: center;
+      padding: 16px 10px;
+      font-size: 0.95rem;
+    }
+
+    .field-group {
+      margin-bottom: 14px;
+    }
+
+    .ingredient-row {
+      border: 1px solid var(--line);
+      border-radius: 14px;
+      padding: 12px;
+      margin-bottom: 10px;
+      background: #fafbfc;
+    }
+
+    .ingredient-grid {
+      display: grid;
+      gap: 10px;
+      grid-template-columns: 1fr;
+    }
+
+    .ingredient-actions {
+      margin-top: 10px;
+    }
+
+    .inline-note {
+      font-size: 0.88rem;
+      color: var(--subtext);
+      margin-top: 6px;
+      line-height: 1.5;
+    }
+
+    .error-box {
+      display: none;
+      background: var(--danger-soft);
+      color: var(--danger);
+      border: 1px solid #f3c7c7;
+      border-radius: 12px;
+      padding: 12px;
+      margin-bottom: 12px;
+      font-size: 0.95rem;
+      line-height: 1.6;
+    }
+
+    .error-box.show {
+      display: block;
+    }
+
+    .detail-grid {
+      display: grid;
+      gap: 10px;
+    }
+
+    .detail-item {
+      padding: 12px;
+      background: #fafbfc;
+      border: 1px solid var(--line);
+      border-radius: 12px;
+    }
+
+    .detail-label {
+      color: var(--subtext);
+      font-size: 0.85rem;
+      margin-bottom: 4px;
+    }
+
+    .detail-value {
+      font-size: 1rem;
+      line-height: 1.6;
+      word-break: break-word;
+    }
+
+    .result-table {
+      width: 100%;
+      border-collapse: collapse;
+      overflow: hidden;
+      border-radius: 12px;
+      border: 1px solid var(--line);
+      background: #fff;
+    }
+
+    .result-table th,
+    .result-table td {
+      padding: 12px 10px;
+      text-align: left;
+      border-bottom: 1px solid #eceff4;
+      vertical-align: top;
+      font-size: 0.95rem;
+      line-height: 1.5;
+    }
+
+    .result-table tr:last-child th,
+    .result-table tr:last-child td {
+      border-bottom: none;
+    }
+
+    .result-table th {
+      background: #f8f9fb;
+      font-weight: 700;
+    }
+
+    .calc-error {
+      color: var(--danger);
+      font-size: 0.95rem;
+      margin-top: 10px;
+      line-height: 1.5;
+    }
+
+    .small-actions {
+      display: flex;
+      gap: 8px;
+    }
+
+    .small-actions .button {
+      min-height: 40px;
+      padding: 10px 12px;
+      font-size: 0.94rem;
+    }
+
+    @media (min-width: 560px) {
+      .ingredient-grid {
+        grid-template-columns: 1.4fr 1fr 0.9fr;
+        align-items: end;
+      }
+
+      .ingredient-actions {
+        margin-top: 8px;
+      }
+    }
+  </style>
+</head>
+<body>
+  <div class="app">
+    <!-- =========================
+         1. Recipe List Screen
+    ========================== -->
+    <section id="listScreen" class="screen active">
+      <div class="topbar">
+        <h1>Recipe Ratio Manager</h1>
+      </div>
+
+      <div class="search-row">
+        <input
+          id="searchInput"
+          class="input"
+          type="search"
+          placeholder="Search by recipe name"
+          autocomplete="off"
+        />
+        <button id="newRecipeButton" class="button" type="button">New Recipe</button>
+      </div>
+
+      <div id="listContainer"></div>
+    </section>
+
+    <!-- =========================
+         2. Recipe Create / Edit Screen
+    ========================== -->
+    <section id="editScreen" class="screen">
+      <div class="topbar">
+        <button id="backToListFromEdit" class="button secondary" type="button">Back</button>
+        <h2 id="editScreenTitle">Create Recipe</h2>
+      </div>
+
+      <div id="editErrorBox" class="error-box"></div>
+
+      <div class="card">
+        <div class="field-group">
+          <label class="label" for="categorySelect">Category <span aria-hidden="true">*</span></label>
+          <select id="categorySelect" class="select"></select>
+          <div class="inline-note">Choose “+ Add a new category” to create a new category.</div>
+        </div>
+
+        <div id="newCategoryGroup" class="field-group" style="display: none;">
+          <label class="label" for="newCategoryInput">New category name</label>
+          <input
+            id="newCategoryInput"
+            class="input"
+            type="text"
+            placeholder="Example: Soup"
+            autocomplete="off"
+          />
+        </div>
+
+        <div class="field-group">
+          <label class="label" for="recipeNameInput">Recipe name <span aria-hidden="true">*</span></label>
+          <input
+            id="recipeNameInput"
+            class="input"
+            type="text"
+            placeholder="Example: Cafe Latte Base"
+            autocomplete="off"
+          />
+        </div>
+
+        <div class="field-group">
+          <div class="label">Ingredients <span aria-hidden="true">*</span></div>
+          <div id="ingredientsContainer"></div>
+          <button id="addIngredientButton" class="button ghost" type="button">+ Add Ingredient</button>
+          <div class="inline-note">At least 2 ingredients are required. Amounts must be greater than 0.</div>
+        </div>
+
+        <div class="field-group">
+          <label class="label" for="commentInput">Comment</label>
+          <textarea
+            id="commentInput"
+            class="textarea"
+            placeholder="Add notes"
+          ></textarea>
+        </div>
+
+        <div class="button-row">
+          <button id="saveRecipeButton" class="button" type="button">Save</button>
+        </div>
+      </div>
+    </section>
+
+    <!-- =========================
+         3. Recipe Detail / Calculation Screen
+    ========================== -->
+    <section id="detailScreen" class="screen">
+      <div class="topbar">
+        <button id="backToListFromDetail" class="button secondary" type="button">Back</button>
+        <h2>Recipe Detail / Calculation</h2>
+      </div>
+
+      <div class="card">
+        <div class="detail-grid">
+          <div class="detail-item">
+            <div class="detail-label">Category</div>
+            <div id="detailCategory" class="detail-value"></div>
+          </div>
+
+          <div class="detail-item">
+            <div class="detail-label">Recipe name</div>
+            <div id="detailName" class="detail-value"></div>
+          </div>
+
+          <div class="detail-item">
+            <div class="detail-label">Comment</div>
+            <div id="detailComment" class="detail-value"></div>
+          </div>
+        </div>
+      </div>
+
+      <div class="card">
+        <div class="field-group">
+          <label class="label" for="baseIngredientSelect">Base ingredient</label>
+          <select id="baseIngredientSelect" class="select"></select>
+        </div>
+
+        <div class="field-group">
+          <label class="label" for="newBaseAmountInput">New amount</label>
+          <input
+            id="newBaseAmountInput"
+            class="input"
+            type="number"
+            inputmode="decimal"
+            step="0.1"
+            min="0"
+            placeholder="Enter a new amount"
+          />
+        </div>
+
+        <div id="calcError" class="calc-error"></div>
+      </div>
+
+      <div class="card">
+        <h3 class="section-title">Calculation Result</h3>
+        <div id="resultContainer"></div>
+      </div>
+
+      <div class="button-row">
+        <button id="editRecipeButton" class="button" type="button">Edit</button>
+      </div>
+    </section>
+  </div>
+
+  <script>
+    /**********************************************************************
+     * Recipe Ratio Manager
+     * - Single-file structure
+     * - Saved in localStorage
+     * - 3 screens switched with JavaScript
+     **********************************************************************/
+
+    // Keys used in localStorage
+    const STORAGE_KEYS = {
+      categories: "ratio_recipe_categories",
+      recipes: "ratio_recipe_recipes"
+    };
+
+    // Default categories
+    const DEFAULT_CATEGORIES = ["Coffee", "Koji", "Dressing", "Sauce"];
+
+    // IDs used for screen switching
+    const SCREEN_IDS = {
+      list: "listScreen",
+      edit: "editScreen",
+      detail: "detailScreen"
+    };
+
+    // App state
+    const appState = {
+      categories: [],
+      recipes: [],
+      openCategoryNames: [],      // Categories currently expanded on the list screen
+      editingRecipeId: null,      // Recipe ID being edited; null when creating new
+      currentDetailRecipeId: null,// Recipe ID currently shown on the detail screen
+      longPressTimer: null,
+      longPressTriggered: false
+    };
+
+    // Get DOM elements
+    const listScreen = document.getElementById("listScreen");
+    const editScreen = document.getElementById("editScreen");
+    const detailScreen = document.getElementById("detailScreen");
+
+    const searchInput = document.getElementById("searchInput");
+    const newRecipeButton = document.getElementById("newRecipeButton");
+    const listContainer = document.getElementById("listContainer");
+
+    const backToListFromEdit = document.getElementById("backToListFromEdit");
+    const editScreenTitle = document.getElementById("editScreenTitle");
+    const editErrorBox = document.getElementById("editErrorBox");
+    const categorySelect = document.getElementById("categorySelect");
+    const newCategoryGroup = document.getElementById("newCategoryGroup");
+    const newCategoryInput = document.getElementById("newCategoryInput");
+    const recipeNameInput = document.getElementById("recipeNameInput");
+    const ingredientsContainer = document.getElementById("ingredientsContainer");
+    const addIngredientButton = document.getElementById("addIngredientButton");
+    const commentInput = document.getElementById("commentInput");
+    const saveRecipeButton = document.getElementById("saveRecipeButton");
+
+    const backToListFromDetail = document.getElementById("backToListFromDetail");
+    const detailCategory = document.getElementById("detailCategory");
+    const detailName = document.getElementById("detailName");
+    const detailComment = document.getElementById("detailComment");
+    const baseIngredientSelect = document.getElementById("baseIngredientSelect");
+    const newBaseAmountInput = document.getElementById("newBaseAmountInput");
+    const calcError = document.getElementById("calcError");
+    const resultContainer = document.getElementById("resultContainer");
+    const editRecipeButton = document.getElementById("editRecipeButton");
+
+    /**********************************************************************
+     * Initialization
+     **********************************************************************/
+
+    init();
+
+    function init() {
+      loadCategories();
+      loadRecipes();
+
+      // Start with all categories collapsed on the list screen
+      appState.openCategoryNames = [];
+
+      bindEvents();
+      renderListScreen();
+      showScreen(SCREEN_IDS.list);
+    }
+
+    /**********************************************************************
+     * Event setup
+     **********************************************************************/
+
+    function bindEvents() {
+      newRecipeButton.addEventListener("click", openCreateScreen);
+      backToListFromEdit.addEventListener("click", () => {
+        renderListScreen();
+        showScreen(SCREEN_IDS.list);
+      });
+      backToListFromDetail.addEventListener("click", () => {
+        renderListScreen();
+        showScreen(SCREEN_IDS.list);
+      });
+
+      categorySelect.addEventListener("change", handleCategorySelectChange);
+      addIngredientButton.addEventListener("click", () => addIngredientRow());
+      saveRecipeButton.addEventListener("click", saveRecipeFromForm);
+      searchInput.addEventListener("input", renderListScreen);
+
+      baseIngredientSelect.addEventListener("change", handleBaseIngredientChange);
+      newBaseAmountInput.addEventListener("input", renderCalculationResult);
+
+      editRecipeButton.addEventListener("click", () => {
+        const recipe = getRecipeById(appState.currentDetailRecipeId);
+        if (!recipe) return;
+        openEditScreen(recipe.id);
+      });
+    }
+
+    /**********************************************************************
+     * Save / Load
+     **********************************************************************/
+
+    function loadCategories() {
+      const stored = localStorage.getItem(STORAGE_KEYS.categories);
+
+      if (!stored) {
+        appState.categories = [...DEFAULT_CATEGORIES];
+        saveCategories();
+        return;
+      }
+
+      try {
+        const parsed = JSON.parse(stored);
+        if (Array.isArray(parsed) && parsed.length > 0) {
+          // Merge so default categories do not disappear
+          const merged = [...DEFAULT_CATEGORIES];
+          parsed.forEach((name) => {
+            if (!hasCaseInsensitiveMatch(merged, name)) {
+              merged.push(String(name));
+            }
+          });
+          appState.categories = merged;
+          saveCategories();
+        } else {
+          appState.categories = [...DEFAULT_CATEGORIES];
+          saveCategories();
+        }
+      } catch (error) {
+        appState.categories = [...DEFAULT_CATEGORIES];
+        saveCategories();
+      }
+    }
+
+    function saveCategories() {
+      localStorage.setItem(STORAGE_KEYS.categories, JSON.stringify(appState.categories));
+    }
+
+    function loadRecipes() {
+      const stored = localStorage.getItem(STORAGE_KEYS.recipes);
+
+      if (!stored) {
+        appState.recipes = [];
+        saveRecipes();
+        return;
+      }
+
+      try {
+        const parsed = JSON.parse(stored);
+        appState.recipes = Array.isArray(parsed) ? parsed : [];
+      } catch (error) {
+        appState.recipes = [];
+      }
+    }
+
+    function saveRecipes() {
+      localStorage.setItem(STORAGE_KEYS.recipes, JSON.stringify(appState.recipes));
+    }
+
+    /**********************************************************************
+     * Screen switching
+     **********************************************************************/
+
+    function showScreen(screenId) {
+      [listScreen, editScreen, detailScreen].forEach((screen) => {
+        screen.classList.remove("active");
+      });
+
+      document.getElementById(screenId).classList.add("active");
+      window.scrollTo({ top: 0, behavior: "auto" });
+    }
+
+    /**********************************************************************
+     * List screen
+     **********************************************************************/
+
+    function renderListScreen() {
+      const searchText = searchInput.value.trim().toLowerCase();
+      listContainer.innerHTML = "";
+
+      // Show all currently saved categories
+      const categories = [...appState.categories];
+
+      if (categories.length === 0) {
+        listContainer.innerHTML = '<div class="empty-message">No categories available.</div>';
+        return;
+      }
+
+      categories.forEach((categoryName) => {
+        const recipesInCategory = appState.recipes.filter((recipe) => {
+          const sameCategory = recipe.category === categoryName;
+          const matchesSearch = recipe.name.toLowerCase().includes(searchText);
+          return sameCategory && matchesSearch;
+        });
+
+        const block = document.createElement("div");
+        block.className = "category-block";
+
+        const header = document.createElement("button");
+        header.type = "button";
+        header.className = "category-header";
+        if (isCategoryOpen(categoryName)) {
+          header.classList.add("open");
+        }
+
+        header.innerHTML = `
+          <span class="category-arrow">▶</span>
+          <span class="category-name">${escapeHtml(categoryName)}</span>
+          <span class="category-count">${recipesInCategory.length} items</span>
+        `;
+
+        header.addEventListener("click", () => {
+          toggleCategoryOpen(categoryName);
+          renderListScreen();
+        });
+
+        const recipeList = document.createElement("div");
+        recipeList.className = "recipe-list";
+        if (isCategoryOpen(categoryName)) {
+          recipeList.classList.add("open");
+        }
+
+        if (recipesInCategory.length === 0) {
+          const empty = document.createElement("div");
+          empty.className = "empty-message";
+          empty.textContent = searchText
+            ? "No matching recipes found."
+            : "There are no recipes in this category.";
+          recipeList.appendChild(empty);
+        } else {
+          recipesInCategory.forEach((recipe) => {
+            const item = createRecipeListItem(recipe);
+            recipeList.appendChild(item);
+          });
+        }
+
+        block.appendChild(header);
+        block.appendChild(recipeList);
+        listContainer.appendChild(block);
+      });
+    }
+
+    function createRecipeListItem(recipe) {
+      const item = document.createElement("div");
+      item.className = "recipe-item";
+
+      const ingredientCount = Array.isArray(recipe.ingredients) ? recipe.ingredients.length : 0;
+
+      item.innerHTML = `
+        <div class="recipe-item-name">${escapeHtml(recipe.name)}</div>
+        <div class="recipe-item-meta">
+          ${ingredientCount} ingredients
+          ${recipe.comment ? " • has comment" : ""}
+        </div>
+      `;
+
+      // Normal tap opens detail screen
+      item.addEventListener("click", (event) => {
+        // If long-press delete already fired, do not open detail screen
+        if (appState.longPressTriggered) {
+          event.preventDefault();
+          appState.longPressTriggered = false;
+          return;
+        }
+        openDetailScreen(recipe.id);
+      });
+
+      // Set up long-press delete
+      setupLongPressDelete(item, recipe);
+
+      return item;
+    }
+
+    function setupLongPressDelete(element, recipe) {
+      const LONG_PRESS_MS = 600;
+
+      const startPress = (event) => {
+        // Prevent duplicate handling from touchstart / mousedown
+        clearLongPress();
+
+        appState.longPressTriggered = false;
+        element.classList.add("long-pressing");
+
+        appState.longPressTimer = setTimeout(() => {
+          appState.longPressTriggered = true;
+          element.classList.remove("long-pressing");
+
+          const ok = window.confirm(`Delete "${recipe.name}"?`);
+          if (ok) {
+            deleteRecipe(recipe.id);
+          }
+        }, LONG_PRESS_MS);
+      };
+
+      const endPress = () => {
+        element.classList.remove("long-pressing");
+        clearLongPress();
+      };
+
+      element.addEventListener("touchstart", startPress, { passive: true });
+      element.addEventListener("touchend", endPress);
+      element.addEventListener("touchcancel", endPress);
+      element.addEventListener("mousedown", startPress);
+      element.addEventListener("mouseup", endPress);
+      element.addEventListener("mouseleave", endPress);
+    }
+
+    function clearLongPress() {
+      if (appState.longPressTimer) {
+        clearTimeout(appState.longPressTimer);
+        appState.longPressTimer = null;
+      }
+    }
+
+    function deleteRecipe(recipeId) {
+      appState.recipes = appState.recipes.filter((recipe) => recipe.id !== recipeId);
+      saveRecipes();
+      renderListScreen();
+    }
+
+    function isCategoryOpen(categoryName) {
+      return appState.openCategoryNames.includes(categoryName);
+    }
+
+    function toggleCategoryOpen(categoryName) {
+      if (isCategoryOpen(categoryName)) {
+        appState.openCategoryNames = appState.openCategoryNames.filter((name) => name !== categoryName);
+      } else {
+        appState.openCategoryNames.push(categoryName);
+      }
+    }
+
+    /**********************************************************************
+     * Create / Edit screen
+     **********************************************************************/
+
+    function openCreateScreen() {
+      appState.editingRecipeId = null;
+      editScreenTitle.textContent = "Create Recipe";
+      clearEditError();
+      resetEditForm();
+      populateCategorySelect();
+      addIngredientRow();
+      addIngredientRow();
+      showScreen(SCREEN_IDS.edit);
+    }
+
+    function openEditScreen(recipeId) {
+      const recipe = getRecipeById(recipeId);
+      if (!recipe) return;
+
+      appState.editingRecipeId = recipeId;
+      editScreenTitle.textContent = "Edit Recipe";
+      clearEditError();
+      resetEditForm();
+      populateCategorySelect();
+
+      categorySelect.value = recipe.category;
+      handleCategorySelectChange();
+
+      recipeNameInput.value = recipe.name || "";
+      commentInput.value = recipe.comment || "";
+
+      ingredientsContainer.innerHTML = "";
+      recipe.ingredients.forEach((ingredient) => {
+        addIngredientRow(ingredient);
+      });
+
+      showScreen(SCREEN_IDS.edit);
+    }
+
+    function resetEditForm() {
+      categorySelect.innerHTML = "";
+      newCategoryInput.value = "";
+      newCategoryGroup.style.display = "none";
+      recipeNameInput.value = "";
+      ingredientsContainer.innerHTML = "";
+      commentInput.value = "";
+    }
+
+    function populateCategorySelect() {
+      categorySelect.innerHTML = "";
+
+      const placeholder = document.createElement("option");
+      placeholder.value = "";
+      placeholder.textContent = "Select a category";
+      categorySelect.appendChild(placeholder);
+
+      appState.categories.forEach((categoryName) => {
+        const option = document.createElement("option");
+        option.value = categoryName;
+        option.textContent = categoryName;
+        categorySelect.appendChild(option);
+      });
+
+      const addNewOption = document.createElement("option");
+      addNewOption.value = "__add_new__";
+      addNewOption.textContent = "+ Add a new category";
+      categorySelect.appendChild(addNewOption);
+    }
+
+    function handleCategorySelectChange() {
+      if (categorySelect.value === "__add_new__") {
+        newCategoryGroup.style.display = "block";
+      } else {
+        newCategoryGroup.style.display = "none";
+        newCategoryInput.value = "";
+      }
+    }
+
+    function addIngredientRow(ingredient = null) {
+      const row = document.createElement("div");
+      row.className = "ingredient-row";
+
+      row.innerHTML = `
+        <div class="ingredient-grid">
+          <div>
+            <label class="label">Ingredient name</label>
+            <input
+              class="input ingredient-name"
+              type="text"
+              placeholder="Example: Milk"
+              autocomplete="off"
+            />
+          </div>
+          <div>
+            <label class="label">Amount</label>
+            <input
+              class="input ingredient-amount"
+              type="number"
+              inputmode="decimal"
+              step="0.1"
+              min="0"
+              placeholder="Example: 150"
+            />
+          </div>
+          <div>
+            <label class="label">Unit</label>
+            <select class="select ingredient-unit">
+              <option value="g">g</option>
+              <option value="ml">ml</option>
+            </select>
+          </div>
+        </div>
+        <div class="ingredient-actions small-actions">
+          <button class="button secondary remove-ingredient-button" type="button">Delete</button>
+        </div>
+      `;
+
+      const nameInput = row.querySelector(".ingredient-name");
+      const amountInput = row.querySelector(".ingredient-amount");
+      const unitSelect = row.querySelector(".ingredient-unit");
+      const removeButton = row.querySelector(".remove-ingredient-button");
+
+      if (ingredient) {
+        nameInput.value = ingredient.name || "";
+        amountInput.value = ingredient.amount ?? "";
+        unitSelect.value = ingredient.unit || "g";
+      }
+
+      removeButton.addEventListener("click", () => {
+        row.remove();
+      });
+
+      ingredientsContainer.appendChild(row);
+    }
+
+    function saveRecipeFromForm() {
+      clearEditError();
+
+      const validationResult = validateRecipeForm();
+      if (!validationResult.isValid) {
+        showEditError(validationResult.messages);
+        return;
+      }
+
+      // Get category. If it is a new category, use the entered value
+      let selectedCategory = categorySelect.value;
+      if (selectedCategory === "__add_new__") {
+        selectedCategory = newCategoryInput.value.trim();
+      }
+
+      // Save new category if needed
+      if (!hasCaseInsensitiveMatch(appState.categories, selectedCategory)) {
+        appState.categories.push(selectedCategory);
+        saveCategories();
+      } else {
+        // Match the exact stored casing of an existing category name
+        selectedCategory = getCaseInsensitiveMatchedValue(appState.categories, selectedCategory);
+      }
+
+      const ingredients = collectIngredientsFromForm();
+
+      const recipeData = {
+        id: appState.editingRecipeId || generateId(),
+        category: selectedCategory,
+        name: recipeNameInput.value.trim(),
+        comment: commentInput.value.trim(),
+        ingredients: ingredients
+      };
+
+      if (appState.editingRecipeId) {
+        const index = appState.recipes.findIndex((recipe) => recipe.id === appState.editingRecipeId);
+        if (index !== -1) {
+          appState.recipes[index] = recipeData;
+        }
+      } else {
+        appState.recipes.push(recipeData);
+      }
+
+      saveRecipes();
+      renderListScreen();
+      openDetailScreen(recipeData.id);
+    }
+
+    function validateRecipeForm() {
+      const messages = [];
+
+      // Category
+      if (!categorySelect.value) {
+        messages.push("Please select a category.");
+      }
+
+      if (categorySelect.value === "__add_new__") {
+        const newCategoryName = newCategoryInput.value.trim();
+
+        if (!newCategoryName) {
+          messages.push("Please enter a new category name.");
+        } else if (hasCaseInsensitiveMatch(appState.categories, newCategoryName)) {
+          messages.push("That category name already exists.");
+        }
+      }
+
+      // Recipe name
+      if (!recipeNameInput.value.trim()) {
+        messages.push("Please enter a recipe name.");
+      }
+
+      // Ingredients
+      const ingredientRows = Array.from(ingredientsContainer.querySelectorAll(".ingredient-row"));
+      if (ingredientRows.length < 2) {
+        messages.push("At least 2 ingredients are required.");
+      }
+
+      const ingredientNamesLower = [];
+
+      ingredientRows.forEach((row, index) => {
+        const name = row.querySelector(".ingredient-name").value.trim();
+        const amountText = row.querySelector(".ingredient-amount").value.trim();
+
+        if (!name) {
+          messages.push(`Please enter a name for ingredient ${index + 1}.`);
+        } else {
+          const lower = name.toLowerCase();
+          if (ingredientNamesLower.includes(lower)) {
+            messages.push(`Ingredient name "${name}" is duplicated.`);
+          }
+          ingredientNamesLower.push(lower);
+        }
+
+        if (amountText === "") {
+          messages.push(`Please enter an amount for ingredient ${index + 1}.`);
+        } else {
+          const amount = Number(amountText);
+          if (!Number.isFinite(amount) || amount <= 0) {
+            messages.push(`The amount for ingredient ${index + 1} must be greater than 0.`);
+          }
+        }
+      });
+
+      return {
+        isValid: messages.length === 0,
+        messages: messages
+      };
+    }
+
+    function collectIngredientsFromForm() {
+      const rows = Array.from(ingredientsContainer.querySelectorAll(".ingredient-row"));
+
+      return rows.map((row) => {
+        return {
+          id: generateId(),
+          name: row.querySelector(".ingredient-name").value.trim(),
+          amount: roundToOneDecimal(Number(row.querySelector(".ingredient-amount").value)),
+          unit: row.querySelector(".ingredient-unit").value
+        };
+      });
+    }
+
+    function showEditError(messages) {
+      editErrorBox.innerHTML = messages.map((message) => `• ${escapeHtml(message)}`).join("<br>");
+      editErrorBox.classList.add("show");
+      window.scrollTo({ top: 0, behavior: "smooth" });
+    }
+
+    function clearEditError() {
+      editErrorBox.innerHTML = "";
+      editErrorBox.classList.remove("show");
+    }
+
+    /**********************************************************************
+     * Detail / Calculation screen
+     **********************************************************************/
+
+    function openDetailScreen(recipeId) {
+      const recipe = getRecipeById(recipeId);
+      if (!recipe) return;
+
+      appState.currentDetailRecipeId = recipeId;
+
+      detailCategory.textContent = recipe.category;
+      detailName.textContent = recipe.name;
+      detailComment.textContent = recipe.comment ? recipe.comment : "(No comment)";
+
+      populateBaseIngredientSelect(recipe);
+      setDefaultBaseAmount(recipe);
+      renderCalculationResult();
+
+      showScreen(SCREEN_IDS.detail);
+    }
+
+    function populateBaseIngredientSelect(recipe) {
+      baseIngredientSelect.innerHTML = "";
+
+      recipe.ingredients.forEach((ingredient) => {
+        const option = document.createElement("option");
+        option.value = ingredient.id;
+        option.textContent = ingredient.name;
+        baseIngredientSelect.appendChild(option);
+      });
+
+      // Use the first ingredient as the default base ingredient
+      if (recipe.ingredients.length > 0) {
+        baseIngredientSelect.value = recipe.ingredients[0].id;
+      }
+    }
+
+    function handleBaseIngredientChange() {
+      const recipe = getRecipeById(appState.currentDetailRecipeId);
+      if (!recipe) return;
+
+      setDefaultBaseAmount(recipe);
+      renderCalculationResult();
+    }
+
+    function setDefaultBaseAmount(recipe) {
+      const baseIngredient = getSelectedBaseIngredient(recipe);
+      if (!baseIngredient) {
+        newBaseAmountInput.value = "";
+        return;
+      }
+
+      // Set the original amount as the default input value
+      newBaseAmountInput.value = formatNumberForInput(baseIngredient.amount);
+    }
+
+    function renderCalculationResult() {
+      const recipe = getRecipeById(appState.currentDetailRecipeId);
+      if (!recipe) return;
+
+      const baseIngredient = getSelectedBaseIngredient(recipe);
+      const inputText = newBaseAmountInput.value.trim();
+
+      calcError.textContent = "";
+      resultContainer.innerHTML = "";
+
+      if (!baseIngredient) {
+        resultContainer.innerHTML = '<div class="empty-message">No base ingredient found.</div>';
+        return;
+      }
+
+      // Do not calculate if the input is empty
+      if (inputText === "") {
+        resultContainer.innerHTML = '<div class="empty-message">Enter a new amount to see the result.</div>';
+        return;
+      }
+
+      const inputAmount = Number(inputText);
+
+      if (!Number.isFinite(inputAmount) || inputAmount <= 0) {
+        calcError.textContent = "Please enter a value greater than 0";
+        resultContainer.innerHTML = '<div class="empty-message">Cannot display calculation result.</div>';
+        return;
+      }
+
+      // Formula:
+      // newAmount = originalAmount × (inputAmount / baseIngredientOriginalAmount)
+      const ratio = inputAmount / baseIngredient.amount;
+
+      const table = document.createElement("table");
+      table.className = "result-table";
+
+      table.innerHTML = `
+        <thead>
+          <tr>
+            <th>Ingredient</th>
+            <th>Original amount</th>
+            <th>New amount</th>
+          </tr>
+        </thead>
+        <tbody></tbody>
+      `;
+
+      const tbody = table.querySelector("tbody");
+
+      recipe.ingredients.forEach((ingredient) => {
+        const newAmount = ingredient.amount * ratio;
+
+        const tr = document.createElement("tr");
+        tr.innerHTML = `
+          <td>${escapeHtml(ingredient.name)}</td>
+          <td>${formatAmountWithUnit(ingredient.amount, ingredient.unit)}</td>
+          <td>${formatAmountWithUnit(newAmount, ingredient.unit)}</td>
+        `;
+        tbody.appendChild(tr);
+      });
+
+      resultContainer.appendChild(table);
+    }
+
+    function getSelectedBaseIngredient(recipe) {
+      return recipe.ingredients.find((ingredient) => ingredient.id === baseIngredientSelect.value);
+    }
+
+    /**********************************************************************
+     * Common utilities
+     **********************************************************************/
+
+    function getRecipeById(recipeId) {
+      return appState.recipes.find((recipe) => recipe.id === recipeId);
+    }
+
+    function generateId() {
+      return "id_" + Date.now() + "_" + Math.random().toString(36).slice(2, 10);
+    }
+
+    function roundToOneDecimal(number) {
+      return Math.round(number * 10) / 10;
+    }
+
+    function formatAmountWithUnit(amount, unit) {
+      return `${roundToOneDecimal(amount).toFixed(1)} ${unit}`;
+    }
+
+    function formatNumberForInput(amount) {
+      return String(roundToOneDecimal(amount));
+    }
+
+    function hasCaseInsensitiveMatch(array, target) {
+      const lowerTarget = String(target).trim().toLowerCase();
+      return array.some((item) => String(item).trim().toLowerCase() === lowerTarget);
+    }
+
+    function getCaseInsensitiveMatchedValue(array, target) {
+      const lowerTarget = String(target).trim().toLowerCase();
+      const matched = array.find((item) => String(item).trim().toLowerCase() === lowerTarget);
+      return matched || target;
+    }
+
+    function escapeHtml(text) {
+      return String(text)
+        .replace(/&/g, "&amp;")
+        .replace(/</g, "&lt;")
+        .replace(/>/g, "&gt;")
+        .replace(/"/g, "&quot;")
+        .replace(/'/g, "&#39;");
+    }
+  </script>
+</body>
+</html>
